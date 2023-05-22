@@ -153,12 +153,17 @@ body {
   height: 40px;
 }
 
-.submit-comment button {
+.submit-comment button,
+.update-button {
   width: 80px;
   border: 0;
   background-color: hsl(238, 40%, 52%);
   color: white;
   border-radius: 5px;
+}
+
+.update-button {
+  height: 40px;
 }
 
 .modal-bg {
@@ -220,7 +225,8 @@ body {
 .action-buttons:hover,
 .submit-comment button:hover,
 .cancel-button:hover,
-.delete-button:hover {
+.delete-button:hover,
+.update-button:hover {
   cursor: pointer;
 }
 

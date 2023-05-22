@@ -3,68 +3,8 @@ import { useEffect, useState, useReducer } from 'react';
 import data from "./data.json";
 import Comment from './components/comment';
 import Modal from './components/modal';
-import uniqid from "uniqid";
+import reducer from './reducers/commentsReducer';
 
-const reducer = (state, action) => {
-  switch (action.type) {
-    case "delete":
-      if (action.nested) {
-        return state.map(comment => {
-          if (comment.replies.length > 0) {
-            return {
-              ...comment,
-              replies: comment.replies.filter(reply => reply.id !== action.id)
-            }
-          } else {
-            return comment;
-          }
-        })
-      } else {
-        return state.filter(comment => comment.id !== action.id);
-      }
-    case "add":
-      if (action.recepient.user) {
-        return state.map(comment => {
-          if(comment.id === action.recepient.id) {
-            return {
-              ...comment,
-              replies: [
-                ...comment.replies, 
-                {
-                  content: action.body,
-                  createdAt: "Today",
-                  id: uniqid(),
-                  replyingTo: action.recepient.user.username,
-                  score: 0,
-                  user: {
-                    ...action.userInfo
-                  }
-                }
-              ]
-            }
-          } else {
-            return comment;
-          }
-        })
-      } else {
-        return [
-          ...state,
-          {
-            content: action.body,
-            createdAt: "Today",
-            id: uniqid(),
-            replies: [],
-            score: 0,
-            user: {
-              ...action.userInfo
-            }
-          },
-        ]
-      }
-    default: 
-      return state;
-  }
-}
 
 function App() {
   const [value, setValue] = useState("");
@@ -118,8 +58,7 @@ function App() {
   }
 
   useEffect(() => {
-    // localStorage.setItem("comments", JSON.stringify(comments));
-    console.log(comments)
+    localStorage.setItem("comments", JSON.stringify(comments));
   }, [comments]);
 
   return (
@@ -133,7 +72,6 @@ function App() {
                 comment={comment} 
                 dispatch={dispatch} 
                 manageReplying={manageReplying}
-                manageModal={manageModal}
                 setModalDispatch={setModalDispatch}
               />
               <div className="replies-container">
@@ -142,8 +80,7 @@ function App() {
                     userInfo={userInfo} 
                     comment={reply} 
                     dispatch={dispatch} 
-                    manageReplying={manageReplying} 
-                    manageModal={manageModal}
+                    manageReplying={manageReplying}
                     setModalDispatch={setModalDispatch}
                     nested={true} 
                     pointing={comment}
@@ -158,7 +95,6 @@ function App() {
             comment={comment} 
             dispatch={dispatch} 
             manageReplying={manageReplying}
-            manageModal={manageModal}
             setModalDispatch={setModalDispatch}
           />
         }
