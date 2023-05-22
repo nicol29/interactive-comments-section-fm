@@ -1,49 +1,199 @@
 import './App.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useReducer } from 'react';
 import data from "./data.json";
 import Comment from './components/comment';
+import Modal from './components/modal';
+import uniqid from "uniqid";
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "delete":
+      if (action.nested) {
+        return state.map(comment => {
+          if (comment.replies.length > 0) {
+            return {
+              ...comment,
+              replies: comment.replies.filter(reply => reply.id !== action.id)
+            }
+          } else {
+            return comment;
+          }
+        })
+      } else {
+        return state.filter(comment => comment.id !== action.id);
+      }
+    case "add":
+      if (action.recepient.user) {
+        return state.map(comment => {
+          if(comment.id === action.recepient.id) {
+            return {
+              ...comment,
+              replies: [
+                ...comment.replies, 
+                {
+                  content: action.body,
+                  createdAt: "Today",
+                  id: uniqid(),
+                  replyingTo: action.recepient.user.username,
+                  score: 0,
+                  user: {
+                    ...action.userInfo
+                  }
+                }
+              ]
+            }
+          } else {
+            return comment;
+          }
+        })
+      } else {
+        return [
+          ...state,
+          {
+            content: action.body,
+            createdAt: "Today",
+            id: uniqid(),
+            replies: [],
+            score: 0,
+            user: {
+              ...action.userInfo
+            }
+          },
+        ]
+      }
+    default: 
+      return state;
+  }
+}
 
 function App() {
-  const [comments, setComments] = useState([]);
-  const [userInfo, setUserInfo] = useState({});
+  const [value, setValue] = useState("");
+  const [recepient, setRecepient] = useState({});
+  const [toggleModal, setToggleModal] = useState({active: false, info: {}});
+
+  if(!localStorage.getItem("comments") || !localStorage.getItem("currentUser")) {
+    localStorage.setItem("comments", JSON.stringify(data.comments));
+    localStorage.setItem("currentUser", JSON.stringify(data.currentUser));
+  }
+
+  const [userInfo, setUserInfo] = useState({user: JSON.parse(localStorage.getItem("currentUser"))});
+
+  const unsortedComments = JSON.parse(localStorage.getItem("comments"));
+  const sortedByUpVotes = unsortedComments.sort((a, b) => a.score + b.score);
+
+  const [comments, dispatch] = useReducer(reducer, sortedByUpVotes);
+
+  const manageReplying = (commentId, pointer) => {
+    comments.forEach(comment => {
+      if(comment.id === commentId) {
+        setRecepient({...comment})
+        setValue(`@${comment.user.username} `)
+      } else if (pointer && comment.replies.length > 0) {
+        comment.replies.forEach(comment => {
+          if(comment.id === commentId) {
+            setRecepient({
+              ...comment, 
+              id: pointer.id
+            })
+            setValue(`@${comment.user.username} `)
+          }
+        });
+      }
+    });
+    const textArea = document.querySelector("textarea");
+    textArea.focus();
+  }
+
+  const manageModal = () => {
+    setToggleModal({...toggleModal, active: !toggleModal.active});
+  }
+
+  const setModalDispatch = (dispatchObj) => {
+    setToggleModal({active: !toggleModal.active, info: dispatchObj});
+  }
+
+  const modalDeleteComment = () => {
+    dispatch(toggleModal.info);
+    manageModal();
+  }
 
   useEffect(() => {
-    if(!localStorage.getItem("comments") && !localStorage.getItem("currentUser")) {
-      localStorage.setItem("comments", JSON.stringify(data.comments));
-      localStorage.setItem("currentUser", JSON.stringify(data.currentUser));
-    } 
-
-    setComments([...comments, ...JSON.parse(localStorage.getItem("comments"))]);
-    setUserInfo({ ...userInfo,  user: JSON.parse(localStorage.getItem("currentUser"))});
-  }, []);
+    // localStorage.setItem("comments", JSON.stringify(comments));
+    console.log(comments)
+  }, [comments]);
 
   return (
     <section className="App">
       {comments.length > 0 && comments.map(comment => {
-        if (comment.replies.length > 0) {
+        if (comment.replies?.length > 0) {
           return (
             <>
-              <Comment userInfo={userInfo} comment={comment}/>
+              <Comment 
+                userInfo={userInfo} 
+                comment={comment} 
+                dispatch={dispatch} 
+                manageReplying={manageReplying}
+                manageModal={manageModal}
+                setModalDispatch={setModalDispatch}
+              />
               <div className="replies-container">
                 {comment.replies.map(reply => (
-                  <Comment userInfo={userInfo} comment={reply}/>
+                  <Comment 
+                    userInfo={userInfo} 
+                    comment={reply} 
+                    dispatch={dispatch} 
+                    manageReplying={manageReplying} 
+                    manageModal={manageModal}
+                    setModalDispatch={setModalDispatch}
+                    nested={true} 
+                    pointing={comment}
+                  />
                 ))}
               </div>
             </>
           )
         } else {
-          return (
-            <Comment userInfo={userInfo} comment={comment}/>
-          )
+          return <Comment 
+            userInfo={userInfo} 
+            comment={comment} 
+            dispatch={dispatch} 
+            manageReplying={manageReplying}
+            manageModal={manageModal}
+            setModalDispatch={setModalDispatch}
+          />
         }
       })}
       <div className="add-comment">
-        <textarea placeholder="Add a comment..." type="text"/>
+        <textarea 
+          placeholder="Add a comment..." 
+          type="text" 
+          value={value} 
+          onChange={(e) => {
+            if(e.target.value === "") setRecepient({});
+            setValue(e.target.value)
+          }}
+        />
         <div className="submit-comment">
           { userInfo.user?.image.png && <img src={require(`./images/avatars/${userInfo.user?.image.png}`)} alt="signed in profile"/>}
-          <button>SEND</button>
+          <button onClick={() => {
+            let sanitizedComment = value;
+
+            if (value.split(" ").shift().charAt(0) === "@") {
+              sanitizedComment = value.split(" ").slice(1, value.length).join(" ");
+            } 
+            
+            dispatch({ 
+              type: "add", 
+              body: sanitizedComment, 
+              userInfo: userInfo.user,
+              recepient: recepient
+            })
+            setRecepient({});
+            setValue("");
+          }}>SEND</button>
         </div>
       </div>
+      {toggleModal.active && <Modal manageModal={manageModal} modalDeleteComment={modalDeleteComment}/>}
     </section>
   );
 }
