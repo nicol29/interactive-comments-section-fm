@@ -1,6 +1,7 @@
 import uniqid from "uniqid";
 import { useState, useRef, useEffect } from "react";
 
+
 function Comment (
   { 
     userInfo, 
@@ -9,7 +10,8 @@ function Comment (
     manageReplying,
     setModalDispatch,
     nested,
-    pointing
+    pointing,
+    reply
   }
 ) {
   const [editable, setEditable] = useState(false);
@@ -18,6 +20,7 @@ function Comment (
   useEffect(() => {
     editableElement.current.setAttribute("contentEditable", editable ? "true" : "false");
     editableElement.current.focus();
+    editableElement.current.style.padding = editable ? "5px" : "0px";
   }, [editable]);
 
   const handleEditOperation = (e) => {
@@ -46,16 +49,18 @@ function Comment (
 
   return (
     <article key={uniqid()} className={"comment"}>
-      <div className="profile-info-container">
-        <img src={require(`../images/avatars/${comment.user.image.png}`)} alt="user profile"/>
-        <p className="username">{comment.user.username}</p>
-        {comment.user.username === userInfo.user.username && <div className="you">you</div>}
-        <p className="date-created">{comment.createdAt}</p>
+      <div>
+        <div className="profile-info-container">
+          <img src={require(`../images/avatars/${comment.user.image.png}`)} alt="user profile"/>
+          <p className="username">{comment.user.username}</p>
+          {comment.user.username === userInfo.user.username && <div className="you">you</div>}
+          <p className="date-created">{comment.createdAt}</p>
+        </div>
+        <p className="content" ref={editableElement}>
+          {comment?.replyingTo && <span className="replying-to">@{comment.replyingTo} </span>}
+          {comment.content}
+        </p>
       </div>
-      <p className="content" ref={editableElement}>
-        {comment?.replyingTo && <span className="replying-to">@{comment.replyingTo} </span>}
-        {comment.content}
-      </p>
       <div className="comment-interactables">
         <div className="vote-buttons">
           <button>+</button>
@@ -63,7 +68,7 @@ function Comment (
           <button>-</button>
         </div>
         {comment.user.username === userInfo.user.username ? 
-          <div className="user-avail-buttons">
+          <div className={`user-avail-buttons ${reply ? "reply-action" : "non-reply"}`}>
             {editable ? 
               <button className="update-button" onClick={() => submitUpdatedComment()}>UPDATE</button> :
               <>
@@ -80,7 +85,7 @@ function Comment (
               </>
             }
           </div>:
-          <div className="action-buttons" onClick={() => manageReplying(comment.id, pointing)}>
+          <div className={`action-buttons ${reply ? "reply-action" : "non-reply"}`} onClick={() => manageReplying(comment.id, pointing)}>
             <svg width="14" height="13" xmlns="http://www.w3.org/2000/svg"><path d="M.227 4.316 5.04.16a.657.657 0 0 1 1.085.497v2.189c4.392.05 7.875.93 7.875 5.093 0 1.68-1.082 3.344-2.279 4.214-.373.272-.905-.07-.767-.51 1.24-3.964-.588-5.017-4.829-5.078v2.404c0 .566-.664.86-1.085.496L.227 5.31a.657.657 0 0 1 0-.993Z" fill="#5357B6"/></svg>
             <p>Reply</p>
           </div>

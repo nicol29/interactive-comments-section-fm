@@ -84,6 +84,7 @@ function App() {
                     setModalDispatch={setModalDispatch}
                     nested={true} 
                     pointing={comment}
+                    reply={true}
                   />
                 ))}
               </div>
