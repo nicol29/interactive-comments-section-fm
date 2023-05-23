@@ -35,8 +35,8 @@ Mobile version:
 
 ### Links
 
-- Solution URL: [Add solution URL here](https://github.com/nicol29/interactive-comments-section-fm)
-- Live Site URL: [Add live site URL here](https://nicol29.github.io/interactive-comments-section-fm/)
+- Solution URL: [https://github.com/nicol29/interactive-comments-section-fm](https://github.com/nicol29/interactive-comments-section-fm)
+- Live Site URL: [https://nicol29.github.io/interactive-comments-section-fm/](https://nicol29.github.io/interactive-comments-section-fm/)
 
 ## My process
 
