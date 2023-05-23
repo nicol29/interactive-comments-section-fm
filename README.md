@@ -44,6 +44,7 @@ Mobile version:
 - I first thought of the structure of my html markup.
 - Afterwards I styled comments to closely resemble the design provided.
 - I began implementing the crud operations using useReducer().
+- Persist changes to the comments into localStorage.
 - Finally, refined any code and styling.
 
 
